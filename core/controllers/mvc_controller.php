@@ -32,19 +32,27 @@ class MvcController {
         foreach ($models as $model_name => $model) {
             $underscore = MvcInflector::underscore($model_name);
             $tableize = MvcInflector::tableize($model_name);
-            // Add dynamicly created methods to HtmlHelper in the form speaker_url($object), speaker_link($object)
-            $method = $underscore.'_url';
-            $this->html->{$method} = create_function('$object, $options=array()', '
-                $defaults = array("controller" => "'.$tableize.'", "action" => "show");
+            // Add dynamically-created methods to HtmlHelper in the form speaker_url($object), speaker_link($object)
+            $method = $underscore . '_url';
+            $this->html->{$method} = function ($object, $options = array()) use ($tableize) {
+                $defaults = array(
+                    'controller' => $tableize,
+                    'action' => 'show'
+                );
                 $options = array_merge($defaults, $options);
+
                 return HtmlHelper::object_url($object, $options);
-            ');
-            $method = $underscore.'_link';
-            $this->html->{$method} = create_function('$object, $options=array()', '
-                $defaults = array("controller" => "'.$tableize.'", "action" => "show");
+            };
+            $method = $underscore . '_link';
+            $this->html->{$method} = function ($object, $options = array()) use ($tableize) {
+                $defaults = array(
+                    'controller' => $tableize,
+                    'action' => 'show'
+                );
                 $options = array_merge($defaults, $options);
+
                 return HtmlHelper::object_link($object, $options);
-            ');
+            };
         }
         
         if (is_admin()) {
@@ -259,10 +267,10 @@ class MvcController {
     protected function include_view($path, $view_vars=array()) {
         extract($view_vars);
         $path = preg_replace('/^admin_([^\/]+)/', 'admin/$1', $path);
-        $filepath = $this->file_includer->find_first_app_file_or_core_file('views/'.$path.'.php');
+        $filepath = $this->file_includer->find_theme_or_view_file($path);
         if (!$filepath) {
             $path = preg_replace('/admin\/(?!layouts)([\w_]+)/', 'admin', $path);
-            $filepath = $this->file_includer->find_first_app_file_or_core_file('views/'.$path.'.php');
+            $filepath = $this->file_includer->find_theme_or_view_file($path);
             if (!$filepath) {
                 MvcError::warning('View "'.$path.'" not found.');
             }
